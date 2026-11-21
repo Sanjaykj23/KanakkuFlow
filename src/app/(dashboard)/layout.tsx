@@ -1,72 +1,42 @@
-"use client";
-
-import React, { useState } from "react";
+import React from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
-import { UserRole } from "@/types/database";
+import { getCurrentUserSession, logoutUser } from "@/modules/auth/actions";
+import { redirect } from "next/navigation";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // In Phase 1 shell, default to OWNER role for initial inspection.
-  // Can be toggled for demo or derived from authenticated session.
-  const [currentRole, setCurrentRole] = useState<UserRole>("OWNER");
+  const session = await getCurrentUserSession();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  const primaryBranch =
+    session.accessibleBranches.find((b) => b.isDefault) ||
+    session.accessibleBranches[0];
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-50">
-      {/* Collapsible Sidebar */}
+      {/* Collapsible Sidebar - Enforcing Role Visibility */}
       <Sidebar
-        currentRole={currentRole}
-        companyName="Sri Murugan Food Industries"
-        activeBranchName="Plant 1 - Madurai Factory"
+        currentRole={session.role}
+        companyName={session.companyName}
+        activeBranchName={primaryBranch ? `${primaryBranch.name} (${primaryBranch.code})` : "All Branches"}
       />
 
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Header
-          currentRole={currentRole}
-          userName="Sanjay K J"
-          userEmail="owner@kanakkuflow.internal"
-          activeBranchCode="MDU-PLANT-01"
-          onLogout={() => {
-            window.location.href = "/login";
-          }}
+          currentRole={session.role}
+          userName={session.fullName}
+          userEmail={session.email}
+          activeBranchCode={primaryBranch?.code || "HQ-ALL"}
+          onLogout={logoutUser}
         />
-
-        {/* Dynamic Role Switcher Bar for Development Testing */}
-        <div className="flex items-center justify-between px-6 py-1.5 text-xs bg-amber-50/80 border-b border-amber-200 text-amber-900">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold">Role Preview Mode:</span>
-            <span>Switch role to inspect role-based sidebar & permission rendering:</span>
-          </div>
-          <div className="flex items-center gap-1.5 overflow-x-auto">
-            {(
-              [
-                "OWNER",
-                "ADMIN",
-                "SUPERVISOR",
-                "SALESMAN",
-                "ACCOUNTANT",
-                "PRODUCTION",
-                "WAREHOUSE",
-              ] as UserRole[]
-            ).map((role) => (
-              <button
-                key={role}
-                onClick={() => setCurrentRole(role)}
-                className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
-                  currentRole === role
-                    ? "bg-slate-900 text-white font-bold"
-                    : "bg-white text-slate-700 hover:bg-amber-100 border border-amber-200"
-                }`}
-              >
-                {role}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Scrollable Viewport */}
         <main className="flex-1 p-6 overflow-y-auto">

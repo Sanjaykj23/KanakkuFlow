@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Factory, Lock, Mail, ShieldAlert, ArrowRight } from "lucide-react";
+import { Factory, Lock, Mail, ShieldAlert, ArrowRight, Loader2 } from "lucide-react";
+import { loginUser } from "@/modules/auth/actions";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,24 +22,29 @@ export default function LoginPage() {
     setErrorMessage("");
 
     try {
-      // Phase 1 local UI simulation / Supabase auth integration
-      if (!email || !password) {
-        setErrorMessage("Please enter both email and password.");
+      const result = await loginUser({ email, password });
+
+      if (!result.success) {
+        setErrorMessage(result.error || "Invalid credentials.");
         setIsLoading(false);
         return;
       }
 
-      // Simulate successful credential validation and role-specific redirect
-      router.push("/dashboard");
+      if (result.requiresPasswordChange) {
+        router.push("/update-password");
+      } else {
+        router.push("/dashboard");
+        router.refresh();
+      }
     } catch (err: any) {
-      setErrorMessage(err.message || "Invalid credentials. Please try again.");
+      setErrorMessage(err.message || "An unexpected error occurred.");
       setIsLoading(false);
     }
   };
 
-  const handleQuickFill = (demoEmail: string) => {
+  const handleQuickFill = (demoEmail: string, demoPass: string) => {
     setEmail(demoEmail);
-    setPassword("KanakkuFlow@2026");
+    setPassword(demoPass);
   };
 
   return (
@@ -63,7 +68,7 @@ export default function LoginPage() {
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-lg">Sign in to your workplace</CardTitle>
             <CardDescription className="text-xs">
-              Enter your corporate email and password to access your role dashboard.
+              Live Supabase Authentication. Connects directly to verified company roles.
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleLogin}>
@@ -82,7 +87,7 @@ export default function LoginPage() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="name@muruganfoods.com"
+                    placeholder="name@kanakkuflow.com"
                     className="pl-9 text-xs"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -98,7 +103,7 @@ export default function LoginPage() {
                     href="/update-password"
                     className="text-xs text-amber-600 hover:underline"
                   >
-                    Forgot password?
+                    Reset password
                   </a>
                 </div>
                 <div className="relative">
@@ -121,48 +126,39 @@ export default function LoginPage() {
                 className="w-full bg-slate-900 text-white hover:bg-slate-800"
                 disabled={isLoading}
               >
-                {isLoading ? "Signing in..." : "Access ERP Dashboard"}
-                <ArrowRight className="w-4 h-4 ml-2" />
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Authenticating with Supabase...
+                  </>
+                ) : (
+                  <>
+                    Access ERP Dashboard
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
               </Button>
             </CardFooter>
           </form>
         </Card>
 
-        {/* Quick Demo Access Bar */}
-        <div className="p-3 border rounded-lg border-slate-200 bg-white/70 text-xs space-y-2">
+        {/* Quick Credentials Access Bar */}
+        <div className="p-3 border rounded-lg border-slate-200 bg-white/80 text-xs space-y-2">
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            Quick Preview Access:
+            Quick Fill Seeded Accounts:
           </div>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => handleQuickFill("owner@kanakkuflow.internal")}
-              className="px-2 py-1 text-[11px] rounded bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+              onClick={() => handleQuickFill("owner@kanakkuflow.com", "KanakkuFlow@Owner2026!")}
+              className="px-2.5 py-1 text-xs rounded bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 font-medium"
             >
-              Owner
+              Sign in as OWNER
             </button>
             <button
-              onClick={() => handleQuickFill("admin@muruganfoods.com")}
-              className="px-2 py-1 text-[11px] rounded bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
+              onClick={() => handleQuickFill("admin@kanakkuflow.com", "KanakkuFlow@Admin2026!")}
+              className="px-2.5 py-1 text-xs rounded bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 font-medium"
             >
-              Admin
-            </button>
-            <button
-              onClick={() => handleQuickFill("sales@muruganfoods.com")}
-              className="px-2 py-1 text-[11px] rounded bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
-            >
-              Salesman
-            </button>
-            <button
-              onClick={() => handleQuickFill("accounts@muruganfoods.com")}
-              className="px-2 py-1 text-[11px] rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
-            >
-              Accountant
-            </button>
-            <button
-              onClick={() => handleQuickFill("prod@muruganfoods.com")}
-              className="px-2 py-1 text-[11px] rounded bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200"
-            >
-              Production
+              Sign in as ADMIN
             </button>
           </div>
         </div>
