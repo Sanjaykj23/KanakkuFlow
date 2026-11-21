@@ -19,6 +19,8 @@ export async function loginUser(formData: {
 }> {
   try {
     const supabase = await createClient();
+
+    // 1. Authenticate with Supabase Auth
     const { data: authData, error: authError } =
       await supabase.auth.signInWithPassword({
         email: formData.email,
@@ -34,31 +36,58 @@ export async function loginUser(formData: {
 
     const userId = authData.user.id;
 
-    // Use adminClient to reliably resolve the user's profile and active company membership
+    // 2. Fetch membership using adminClient first
     const adminClient = createAdminClient();
 
-    const { data: profile } = await adminClient
+    const { data: profile, error: profErr } = await adminClient
       .from("user_profiles")
       .select("full_name, requires_password_change")
       .eq("id", userId)
       .maybeSingle();
 
-    const { data: membership } = await adminClient
+    let { data: membership, error: memErr } = await adminClient
       .from("company_memberships")
       .select("role, status, company_id")
       .eq("user_id", userId)
-      .eq("status", "ACTIVE")
       .maybeSingle();
 
+    // If adminClient had an error (e.g., service role key issue), attempt with authed user client
+    if (memErr || !membership) {
+      console.warn("[AUTH] adminClient membership query issue:", memErr?.message || "No row found");
+
+      const { data: userMem, error: userMemErr } = await supabase
+        .from("company_memberships")
+        .select("role, status, company_id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (userMem) {
+        membership = userMem;
+      } else if (memErr) {
+        return {
+          success: false,
+          error: `Database connection error: ${memErr.message}. Ensure SUPABASE_SERVICE_ROLE_KEY is set in .env.local and restart the server.`,
+        };
+      }
+    }
+
     if (!membership) {
-      await supabase.auth.signOut();
+      // User exists in auth.users, but has no record in company_memberships
       return {
         success: false,
-        error: "Your account is deactivated or has no active company membership. Contact your Administrator.",
+        error: `No company membership found for user (${formData.email}). Please ensure the database seed script has run or contact the Owner.`,
       };
     }
 
-    // Store active company ID in cookie so middleware attaches x-company-id for RLS
+    if (membership.status !== "ACTIVE") {
+      await supabase.auth.signOut();
+      return {
+        success: false,
+        error: `Your account status is ${membership.status}. Please contact your Administrator.`,
+      };
+    }
+
+    // 3. Store active company ID in cookie so middleware attaches x-company-id for RLS
     const cookieStore = await cookies();
     cookieStore.set("kanakku_company_id", membership.company_id, {
       path: "/",
