@@ -1,6 +1,5 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUserSession } from "@/modules/auth/actions";
 import { UserRole, MembershipStatus } from "@/types/database";
@@ -30,9 +29,9 @@ export async function getEmployees(): Promise<{
       return { success: false, error: "Unauthorized session" };
     }
 
-    const supabase = await createClient();
+    const adminClient = createAdminClient();
 
-    const { data: memberships, error } = await supabase
+    const { data: memberships, error } = await adminClient
       .from("company_memberships")
       .select(`
         id,
@@ -97,8 +96,8 @@ export async function getCompanyBranches(): Promise<{
   const session = await getCurrentUserSession();
   if (!session) return [];
 
-  const supabase = await createClient();
-  const { data: branches } = await supabase
+  const adminClient = createAdminClient();
+  const { data: branches } = await adminClient
     .from("branches")
     .select("id, code, name")
     .eq("company_id", session.companyId)
@@ -162,7 +161,6 @@ export async function createEmployee(data: {
 
     let employeeCode = codeData;
     if (codeErr || !employeeCode) {
-      // Fallback code generation
       const { count } = await adminClient
         .from("company_memberships")
         .select("id", { count: "exact", head: true })
@@ -171,7 +169,9 @@ export async function createEmployee(data: {
     }
 
     // 2. Generate temporary password
-    const tempPassword = data.initialPassword || `Kanakku@${Math.random().toString(36).slice(-8)}!`;
+    const tempPassword =
+      data.initialPassword ||
+      `Kanakku@${Math.random().toString(36).slice(-8)}!`;
 
     // 3. Create user in auth.users
     const { data: authUser, error: authError } =

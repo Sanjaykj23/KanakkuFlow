@@ -439,7 +439,10 @@ WITH CHECK (id = auth.uid());
 -- 4. COMPANY_MEMBERSHIPS
 CREATE POLICY "Members can view coworkers in active company"
 ON public.company_memberships FOR SELECT TO authenticated
-USING (company_id = public.current_company_id());
+USING (
+    user_id = auth.uid() OR
+    company_id = public.current_company_id()
+);
 
 CREATE POLICY "Owner and Admin can insert/update memberships"
 ON public.company_memberships FOR ALL TO authenticated

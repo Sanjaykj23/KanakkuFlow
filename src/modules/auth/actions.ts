@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { CurrentUserSession } from "@/types/auth";
 import { UserRole } from "@/types/database";
 
@@ -33,14 +34,16 @@ export async function loginUser(formData: {
 
     const userId = authData.user.id;
 
-    // Fetch user profile and company membership
-    const { data: profile } = await supabase
+    // Use adminClient to reliably resolve the user's profile and active company membership
+    const adminClient = createAdminClient();
+
+    const { data: profile } = await adminClient
       .from("user_profiles")
       .select("full_name, requires_password_change")
       .eq("id", userId)
       .maybeSingle();
 
-    const { data: membership } = await supabase
+    const { data: membership } = await adminClient
       .from("company_memberships")
       .select("role, status, company_id")
       .eq("user_id", userId)
@@ -48,13 +51,21 @@ export async function loginUser(formData: {
       .maybeSingle();
 
     if (!membership) {
-      // Deactivated or no active company membership
       await supabase.auth.signOut();
       return {
         success: false,
         error: "Your account is deactivated or has no active company membership. Contact your Administrator.",
       };
     }
+
+    // Store active company ID in cookie so middleware attaches x-company-id for RLS
+    const cookieStore = await cookies();
+    cookieStore.set("kanakku_company_id", membership.company_id, {
+      path: "/",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
 
     revalidatePath("/", "layout");
 
@@ -74,6 +85,8 @@ export async function loginUser(formData: {
 export async function logoutUser() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  const cookieStore = await cookies();
+  cookieStore.delete("kanakku_company_id");
   revalidatePath("/", "layout");
   redirect("/login");
 }
@@ -98,21 +111,23 @@ export async function updateUserPassword(newPassword: string): Promise<{
       return { success: false, error: updateAuthErr.message };
     }
 
+    const adminClient = createAdminClient();
+
     // Clear requires_password_change flag
-    await supabase
+    await adminClient
       .from("user_profiles")
       .update({ requires_password_change: false, updated_at: new Date().toISOString() })
       .eq("id", sessionData.user.id);
 
     // Audit log
-    const { data: mem } = await supabase
+    const { data: mem } = await adminClient
       .from("company_memberships")
       .select("company_id")
       .eq("user_id", sessionData.user.id)
       .maybeSingle();
 
     if (mem?.company_id) {
-      await supabase.from("audit_logs").insert({
+      await adminClient.from("audit_logs").insert({
         company_id: mem.company_id,
         user_id: sessionData.user.id,
         action: "PASSWORD_ROTATED",
@@ -139,16 +154,17 @@ export async function getCurrentUserSession(): Promise<CurrentUserSession | null
     }
 
     const userId = authData.user.id;
+    const adminClient = createAdminClient();
 
     // Get user profile
-    const { data: profile } = await supabase
+    const { data: profile } = await adminClient
       .from("user_profiles")
       .select("*")
       .eq("id", userId)
       .maybeSingle();
 
     // Get active company membership
-    const { data: membership } = await supabase
+    const { data: membership } = await adminClient
       .from("company_memberships")
       .select(`
         id,
@@ -170,7 +186,7 @@ export async function getCurrentUserSession(): Promise<CurrentUserSession | null
     }
 
     // Get accessible branches
-    const { data: branchMappings } = await supabase
+    const { data: branchMappings } = await adminClient
       .from("membership_branches")
       .select(`
         is_default,
@@ -197,7 +213,7 @@ export async function getCurrentUserSession(): Promise<CurrentUserSession | null
       fullName: profile?.full_name || authData.user.email || "Staff Member",
       role: membership.role as UserRole,
       companyId: membership.company_id,
-      companyName: companyInfo?.trade_name || companyInfo?.legal_name || "KanakkuFlow Foods",
+      companyName: companyInfo?.trade_name || companyInfo?.legal_name || "Sri Murugan Food Industries",
       accessibleBranches: branches,
       requiresPasswordChange: profile?.requires_password_change ?? false,
       permissions: [],
