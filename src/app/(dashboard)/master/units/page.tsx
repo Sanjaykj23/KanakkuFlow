@@ -35,12 +35,15 @@ import {
   Edit2,
   Loader2,
   CheckCircle2,
+  Sparkles,
+  AlertCircle,
 } from "lucide-react";
 import {
   getUnits,
   saveUnit,
   getUnitConversions,
   saveUnitConversion,
+  seedDefaultMasterData,
 } from "@/modules/master/actions";
 import { Unit, UnitConversion } from "@/types/database";
 
@@ -48,6 +51,7 @@ export default function UnitsMasterPage() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [conversions, setConversions] = useState<UnitConversion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSeeding, setIsSeeding] = useState(false);
 
   // Unit Modal
   const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
@@ -78,6 +82,17 @@ export default function UnitsMasterPage() {
     if (uRes.success && uRes.units) setUnits(uRes.units);
     if (cRes.success && cRes.conversions) setConversions(cRes.conversions);
     setLoading(false);
+  };
+
+  const handleSeedDefaults = async () => {
+    setIsSeeding(true);
+    const res = await seedDefaultMasterData();
+    setIsSeeding(false);
+    if (!res.success) {
+      alert("Failed to seed default master data: " + res.error);
+    } else {
+      loadData();
+    }
   };
 
   useEffect(() => {
@@ -167,6 +182,41 @@ export default function UnitsMasterPage() {
           </Button>
         </div>
       </div>
+
+      {/* Empty Units Banner */}
+      {units.length === 0 && !loading && (
+        <div className="p-4 bg-primary/10 border border-primary/30 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <Sparkles className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+            <div>
+              <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                Setup Units & Conversions for Food Manufacturing
+              </div>
+              <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                Load standard units (KG, G, PKT, BOX, NOS) and common conversion factors (1 KG = 1000 G, 1 BOX = 24 PKT) with one click.
+              </div>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={handleSeedDefaults}
+            disabled={isSeeding}
+            className="flex-shrink-0"
+          >
+            {isSeeding ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                Loading Units...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 mr-1.5" />
+                Seed Standard Food Units
+              </>
+            )}
+          </Button>
+        </div>
+      )}
 
       {/* Grid of Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -398,6 +448,18 @@ export default function UnitsMasterPage() {
             </div>
           )}
 
+          {units.length < 2 && (
+            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded text-xs text-amber-700 dark:text-amber-400 space-y-1">
+              <div className="font-semibold flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4 text-amber-600" />
+                At least 2 units of measure are required
+              </div>
+              <p>
+                You need at least two units defined to create conversion factors. Click &quot;Seed Standard Food Units&quot; on the page to automatically load them.
+              </p>
+            </div>
+          )}
+
           <form onSubmit={handleSaveConv} className="space-y-3 pt-2">
             <div className="space-y-1">
               <Label>Source Unit (From)</Label>
@@ -409,11 +471,15 @@ export default function UnitsMasterPage() {
                 }
                 required
               >
-                {units.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name} ({u.code})
-                  </option>
-                ))}
+                {units.length === 0 ? (
+                  <option value="">No units available</option>
+                ) : (
+                  units.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name} ({u.code})
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 
@@ -427,11 +493,15 @@ export default function UnitsMasterPage() {
                 }
                 required
               >
-                {units.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name} ({u.code})
-                  </option>
-                ))}
+                {units.length === 0 ? (
+                  <option value="">No units available</option>
+                ) : (
+                  units.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name} ({u.code})
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 

@@ -627,3 +627,238 @@ export async function saveWarehouse(
     return { success: false, error: err.message };
   }
 }
+
+// ============================================================================
+// 6. DEFAULT FOOD INDUSTRY MASTER SEEDER
+// ============================================================================
+
+export async function seedDefaultMasterData(): Promise<{
+  success: boolean;
+  message?: string;
+  error?: string;
+}> {
+  try {
+    const session = await getCurrentUserSession();
+    if (!session || !["OWNER", "ADMIN"].includes(session.role)) {
+      return { success: false, error: "Access Denied: Only Owner or Admin can seed master data." };
+    }
+
+    const admin = createAdminClient();
+    const companyId = session.companyId;
+
+    // 1. Seed Units
+    const defaultUnits = [
+      { company_id: companyId, code: "KG", name: "Kilogram", symbol: "kg", is_base_unit: true },
+      { company_id: companyId, code: "G", name: "Gram", symbol: "g", is_base_unit: false },
+      { company_id: companyId, code: "PKT", name: "Packet", symbol: "pkt", is_base_unit: true },
+      { company_id: companyId, code: "BOX", name: "Master Carton Box", symbol: "box", is_base_unit: false },
+      { company_id: companyId, code: "NOS", name: "Numbers / Pieces", symbol: "nos", is_base_unit: false },
+    ];
+
+    for (const u of defaultUnits) {
+      const { data: existing } = await admin
+        .from("units")
+        .select("id")
+        .eq("company_id", companyId)
+        .eq("code", u.code)
+        .maybeSingle();
+
+      if (!existing) {
+        await admin.from("units").insert(u);
+      }
+    }
+
+    // Retrieve units map
+    const { data: allUnits } = await admin.from("units").select("id, code").eq("company_id", companyId);
+    const unitMap = new Map((allUnits || []).map((u) => [u.code, u.id]));
+
+    // 2. Seed Unit Conversions
+    const kgId = unitMap.get("KG");
+    const gId = unitMap.get("G");
+    const boxId = unitMap.get("BOX");
+    const pktId = unitMap.get("PKT");
+
+    if (kgId && gId) {
+      const { data: existingConv } = await admin
+        .from("unit_conversions")
+        .select("id")
+        .eq("company_id", companyId)
+        .eq("from_unit_id", kgId)
+        .eq("to_unit_id", gId)
+        .maybeSingle();
+
+      if (!existingConv) {
+        await admin.from("unit_conversions").insert({
+          company_id: companyId,
+          from_unit_id: kgId,
+          to_unit_id: gId,
+          conversion_rate: 1000,
+        });
+      }
+    }
+
+    if (boxId && pktId) {
+      const { data: existingConv } = await admin
+        .from("unit_conversions")
+        .select("id")
+        .eq("company_id", companyId)
+        .eq("from_unit_id", boxId)
+        .eq("to_unit_id", pktId)
+        .maybeSingle();
+
+      if (!existingConv) {
+        await admin.from("unit_conversions").insert({
+          company_id: companyId,
+          from_unit_id: boxId,
+          to_unit_id: pktId,
+          conversion_rate: 24,
+        });
+      }
+    }
+
+    // 3. Seed HSN Codes
+    const defaultHsn = [
+      {
+        company_id: companyId,
+        code: "1905",
+        description: "Murukku, namkeen, savouries, mixture, and bakery products",
+      },
+      {
+        company_id: companyId,
+        code: "2106",
+        description: "Food preparations, roasted sweets and snacks not elsewhere specified",
+      },
+      {
+        company_id: companyId,
+        code: "1101",
+        description: "Flour (Rice flour, Besan / Gram flour, Wheat flour)",
+      },
+      {
+        company_id: companyId,
+        code: "1507",
+        description: "Edible vegetable cooking oils (Palm olein, Groundnut oil)",
+      },
+      {
+        company_id: companyId,
+        code: "3923",
+        description: "Plastic packaging materials, printed nitrogen pouches, rolls",
+      },
+    ];
+
+    for (const h of defaultHsn) {
+      const { data: existing } = await admin
+        .from("hsn_codes")
+        .select("id")
+        .eq("company_id", companyId)
+        .eq("code", h.code)
+        .maybeSingle();
+
+      if (!existing) {
+        await admin.from("hsn_codes").insert(h);
+      }
+    }
+
+    // 4. Seed GST Tax Slabs
+    const defaultTaxes = [
+      {
+        company_id: companyId,
+        name: "GST 12% (Packaged Snacks & Murukku)",
+        igst_rate: 12,
+        cgst_rate: 6,
+        sgst_rate: 6,
+        cess_rate: 0,
+        effective_from: "2024-01-01",
+      },
+      {
+        company_id: companyId,
+        name: "GST 5% (Essentials & Cooking Oil)",
+        igst_rate: 5,
+        cgst_rate: 2.5,
+        sgst_rate: 2.5,
+        cess_rate: 0,
+        effective_from: "2024-01-01",
+      },
+      {
+        company_id: companyId,
+        name: "GST 18% (Packaging Materials)",
+        igst_rate: 18,
+        cgst_rate: 9,
+        sgst_rate: 9,
+        cess_rate: 0,
+        effective_from: "2024-01-01",
+      },
+      {
+        company_id: companyId,
+        name: "GST 0% (Exempt Agricultural Grains)",
+        igst_rate: 0,
+        cgst_rate: 0,
+        sgst_rate: 0,
+        cess_rate: 0,
+        effective_from: "2024-01-01",
+      },
+    ];
+
+    for (const t of defaultTaxes) {
+      const { data: existing } = await admin
+        .from("tax_rates")
+        .select("id")
+        .eq("company_id", companyId)
+        .eq("name", t.name)
+        .maybeSingle();
+
+      if (!existing) {
+        await admin.from("tax_rates").insert(t);
+      }
+    }
+
+    // 5. Seed Warehouses for Company Branches
+    const { data: branches } = await admin
+      .from("branches")
+      .select("id, code, name")
+      .eq("company_id", companyId);
+
+    if (branches && branches.length > 0) {
+      for (const branch of branches) {
+        const defaultWh = [
+          {
+            company_id: companyId,
+            branch_id: branch.id,
+            code: `WH-FG-${branch.code.replace(/[^A-Z0-9]/gi, "").slice(0, 6).toUpperCase()}`,
+            name: `${branch.name} - Finished Goods Store`,
+          },
+          {
+            company_id: companyId,
+            branch_id: branch.id,
+            code: `WH-RM-${branch.code.replace(/[^A-Z0-9]/gi, "").slice(0, 6).toUpperCase()}`,
+            name: `${branch.name} - Raw Materials Godown`,
+          },
+        ];
+
+        for (const w of defaultWh) {
+          const { data: existingWh } = await admin
+            .from("warehouses")
+            .select("id")
+            .eq("company_id", companyId)
+            .eq("code", w.code)
+            .maybeSingle();
+
+          if (!existingWh) {
+            await admin.from("warehouses").insert(w);
+          }
+        }
+      }
+    }
+
+    revalidatePath("/master/items");
+    revalidatePath("/master/units");
+    revalidatePath("/master/hsn-tax");
+    revalidatePath("/master/warehouses");
+
+    return {
+      success: true,
+      message: "Successfully seeded food industry standard Units, HSN codes, GST tax slabs, and Warehouses!",
+    };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}

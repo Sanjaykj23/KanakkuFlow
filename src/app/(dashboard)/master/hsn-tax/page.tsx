@@ -36,12 +36,14 @@ import {
   Loader2,
   Calendar,
   AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 import {
   getHsnCodes,
   saveHsnCode,
   getTaxRates,
   saveTaxRate,
+  seedDefaultMasterData,
 } from "@/modules/master/actions";
 import { HsnCode, TaxRate } from "@/types/database";
 
@@ -49,6 +51,7 @@ export default function HsnTaxMasterPage() {
   const [hsnCodes, setHsnCodes] = useState<HsnCode[]>([]);
   const [taxRates, setTaxRates] = useState<TaxRate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSeeding, setIsSeeding] = useState(false);
 
   // HSN Modal
   const [isHsnModalOpen, setIsHsnModalOpen] = useState(false);
@@ -81,6 +84,17 @@ export default function HsnTaxMasterPage() {
     if (hRes.success && hRes.hsnCodes) setHsnCodes(hRes.hsnCodes);
     if (tRes.success && tRes.taxRates) setTaxRates(tRes.taxRates);
     setLoading(false);
+  };
+
+  const handleSeedDefaults = async () => {
+    setIsSeeding(true);
+    const res = await seedDefaultMasterData();
+    setIsSeeding(false);
+    if (!res.success) {
+      alert("Failed to seed default master data: " + res.error);
+    } else {
+      loadData();
+    }
   };
 
   useEffect(() => {
@@ -193,6 +207,41 @@ export default function HsnTaxMasterPage() {
           </Button>
         </div>
       </div>
+
+      {/* Empty State Banner */}
+      {(hsnCodes.length === 0 || taxRates.length === 0) && !loading && (
+        <div className="p-4 bg-primary/10 border border-primary/30 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <Sparkles className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+            <div>
+              <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                Setup HSN Codes & GST Slabs for Snacks & Murukku
+              </div>
+              <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                Load standard food HSN codes (1905, 2106, 1101, 1507) and Indian GST slabs (5%, 12%, 18%) with one click.
+              </div>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={handleSeedDefaults}
+            disabled={isSeeding}
+            className="flex-shrink-0"
+          >
+            {isSeeding ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                Loading Tax Data...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 mr-1.5" />
+                Seed Standard Food HSN & GST
+              </>
+            )}
+          </Button>
+        </div>
+      )}
 
       {/* Grid of Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

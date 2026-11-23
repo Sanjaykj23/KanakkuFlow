@@ -37,6 +37,8 @@ import {
   Loader2,
   Calendar,
   CheckCircle2,
+  Sparkles,
+  AlertCircle,
 } from "lucide-react";
 import {
   getItems,
@@ -44,6 +46,7 @@ import {
   getUnits,
   getHsnCodes,
   getTaxRates,
+  seedDefaultMasterData,
 } from "@/modules/master/actions";
 import { Item, Unit, HsnCode, TaxRate, ItemType } from "@/types/database";
 
@@ -55,6 +58,7 @@ export default function ItemsMasterPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
+  const [isSeeding, setIsSeeding] = useState(false);
 
   // Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -103,6 +107,17 @@ export default function ItemsMasterPage() {
     if (hsnRes.success && hsnRes.hsnCodes) setHsnCodes(hsnRes.hsnCodes);
     if (taxRes.success && taxRes.taxRates) setTaxRates(taxRes.taxRates);
     setLoading(false);
+  };
+
+  const handleSeedDefaults = async () => {
+    setIsSeeding(true);
+    const res = await seedDefaultMasterData();
+    setIsSeeding(false);
+    if (!res.success) {
+      alert("Failed to seed default master data: " + res.error);
+    } else {
+      loadData();
+    }
   };
 
   useEffect(() => {
@@ -205,6 +220,41 @@ export default function ItemsMasterPage() {
           Add Item
         </Button>
       </div>
+
+      {/* Empty State Banner to Seed Master Data */}
+      {(units.length === 0 || hsnCodes.length === 0 || taxRates.length === 0) && !loading && (
+        <div className="p-4 bg-primary/10 border border-primary/30 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <Sparkles className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+            <div>
+              <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                Quick Setup: Standard Food Industry Master Data Not Loaded Yet
+              </div>
+              <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                Populate standard packaging units (KG, G, PKT, BOX), HSN codes (1905, 2106), GST slabs (5%, 12%, 18%), and Warehouses with one click.
+              </div>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={handleSeedDefaults}
+            disabled={isSeeding}
+            className="flex-shrink-0"
+          >
+            {isSeeding ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                Loading Defaults...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 mr-1.5" />
+                Seed Food Industry Defaults
+              </>
+            )}
+          </Button>
+        </div>
+      )}
 
       {/* Filters */}
       <Card>
@@ -424,13 +474,20 @@ export default function ItemsMasterPage() {
                   }
                   required
                 >
-                  <option value="">Select Unit</option>
+                  <option value="">
+                    {units.length === 0 ? "No units available (Load defaults first)" : "Select Unit"}
+                  </option>
                   {units.map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.name} ({u.symbol})
                     </option>
                   ))}
                 </select>
+                {units.length === 0 && (
+                  <p className="text-[10px] text-amber-600">
+                    No units loaded yet.
+                  </p>
+                )}
               </div>
               <div className="space-y-1">
                 <Label htmlFor="hsn">HSN Code</Label>
@@ -442,13 +499,20 @@ export default function ItemsMasterPage() {
                     setFormData({ ...formData, hsnCodeId: e.target.value })
                   }
                 >
-                  <option value="">None</option>
+                  <option value="">
+                    {hsnCodes.length === 0 ? "No HSN codes available" : "None"}
+                  </option>
                   {hsnCodes.map((h) => (
                     <option key={h.id} value={h.id}>
                       {h.code} - {h.description.slice(0, 20)}
                     </option>
                   ))}
                 </select>
+                {hsnCodes.length === 0 && (
+                  <p className="text-[10px] text-amber-600">
+                    No HSN codes loaded yet.
+                  </p>
+                )}
               </div>
               <div className="space-y-1">
                 <Label htmlFor="taxRate">GST Tax Slab</Label>
@@ -460,13 +524,20 @@ export default function ItemsMasterPage() {
                     setFormData({ ...formData, defaultTaxRateId: e.target.value })
                   }
                 >
-                  <option value="">None</option>
+                  <option value="">
+                    {taxRates.length === 0 ? "No Tax Slabs available" : "None"}
+                  </option>
                   {taxRates.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.name} ({t.igst_rate}%)
                     </option>
                   ))}
                 </select>
+                {taxRates.length === 0 && (
+                  <p className="text-[10px] text-amber-600">
+                    No GST slabs loaded yet.
+                  </p>
+                )}
               </div>
             </div>
 
