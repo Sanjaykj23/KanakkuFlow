@@ -35,12 +35,59 @@ export const NAVIGATION_CONFIG: NavGroup[] = [
     ],
   },
   {
+    group: "Master Data",
+    items: [
+      {
+        title: "Items & Products",
+        href: "/master/items",
+        icon: "Package",
+        allowedRoles: ["OWNER", "ADMIN", "SUPERVISOR", "ACCOUNTANT", "PRODUCTION", "WAREHOUSE", "SALESMAN"],
+      },
+      {
+        title: "Units of Measure",
+        href: "/master/units",
+        icon: "Scale",
+        allowedRoles: ["OWNER", "ADMIN"],
+      },
+      {
+        title: "HSN & GST Rates",
+        href: "/master/hsn-tax",
+        icon: "Percent",
+        allowedRoles: ["OWNER", "ADMIN", "ACCOUNTANT"],
+      },
+      {
+        title: "Suppliers",
+        href: "/master/suppliers",
+        icon: "Truck",
+        allowedRoles: ["OWNER", "ADMIN", "ACCOUNTANT"],
+      },
+      {
+        title: "Warehouses",
+        href: "/master/warehouses",
+        icon: "Warehouse",
+        allowedRoles: ["OWNER", "ADMIN", "WAREHOUSE"],
+      },
+    ],
+  },
+  {
     group: "Field Sales & CRM",
     items: [
       {
-        title: "Shop Visits & Registrations",
-        href: "/sales/shop-registrations",
+        title: "Customer Directory",
+        href: "/customers",
+        icon: "UsersRound",
+        allowedRoles: ["OWNER", "ADMIN", "SUPERVISOR", "SALESMAN", "ACCOUNTANT"],
+      },
+      {
+        title: "New Shop Registration",
+        href: "/customers/register",
         icon: "Store",
+        allowedRoles: ["OWNER", "ADMIN", "SALESMAN"],
+      },
+      {
+        title: "Registration Approvals",
+        href: "/customers/registrations",
+        icon: "ClipboardList",
         allowedRoles: ["OWNER", "ADMIN", "SUPERVISOR", "SALESMAN"],
       },
       {

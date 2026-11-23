@@ -24,6 +24,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Building2,
+  Package,
+  Scale,
+  Percent,
+  Warehouse,
+  UsersRound,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAVIGATION_CONFIG } from "@/lib/constants";
@@ -47,6 +53,12 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   FileSpreadsheet: <FileSpreadsheet className="w-4 h-4" />,
   Users: <Users className="w-4 h-4" />,
   Settings: <Settings className="w-4 h-4" />,
+  Package: <Package className="w-4 h-4" />,
+  Scale: <Scale className="w-4 h-4" />,
+  Percent: <Percent className="w-4 h-4" />,
+  Warehouse: <Warehouse className="w-4 h-4" />,
+  UsersRound: <UsersRound className="w-4 h-4" />,
+  ClipboardList: <ClipboardList className="w-4 h-4" />,
 };
 
 interface SidebarProps {
