@@ -871,3 +871,164 @@ export interface ProductionOutput {
   warehouse?: Warehouse;
   unit?: Unit;
 }
+
+// ============================================================================
+// PHASE 6: SALES & ORDER MANAGEMENT
+// ============================================================================
+
+export type SalesOrderStatus =
+  | "DRAFT"
+  | "SUBMITTED"
+  | "PENDING_APPROVAL"
+  | "APPROVED"
+  | "PARTIALLY_ALLOCATED"
+  | "ALLOCATED"
+  | "READY_FOR_DISPATCH"
+  | "PARTIALLY_DISPATCHED"
+  | "DISPATCHED"
+  | "REJECTED"
+  | "CANCELLED";
+
+export type SalesOrderApprovalStatus =
+  | "NOT_REQUIRED"
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED";
+
+export type PriceListType =
+  | "STANDARD"
+  | "CUSTOMER_SPECIAL"
+  | "DISTRIBUTOR"
+  | "SEASONAL";
+
+export interface PriceList {
+  id: string;
+  company_id: string;
+  code: string;
+  name: string;
+  list_type: PriceListType;
+  is_default: boolean;
+  is_active: boolean;
+  valid_from: string;
+  valid_to?: string | null;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  items?: PriceListItem[];
+}
+
+export interface PriceListItem {
+  id: string;
+  company_id: string;
+  price_list_id: string;
+  item_id: string;
+  unit_id: string;
+  price_paisa: number;
+  min_selling_price_paisa: number;
+  created_at: string;
+  updated_at: string;
+  item?: Item;
+  unit?: Unit;
+}
+
+export interface CustomerPricing {
+  id: string;
+  company_id: string;
+  customer_id: string;
+  item_id: string;
+  unit_id: string;
+  special_price_paisa: number;
+  min_selling_price_paisa: number;
+  valid_from: string;
+  valid_to?: string | null;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  customer?: Customer;
+  item?: Item;
+  unit?: Unit;
+}
+
+export interface SalesOrder {
+  id: string;
+  company_id: string;
+  branch_id: string;
+  order_number: string;
+  customer_id: string;
+  delivery_address_id: string;
+  assigned_salesman_id?: string | null;
+  order_date: string;
+  requested_delivery_date: string;
+  payment_terms_days: number;
+  price_list_id?: string | null;
+  status: SalesOrderStatus;
+  approval_status: SalesOrderApprovalStatus;
+  approval_required_reason?: string | null;
+  approved_by?: string | null;
+  approved_at?: string | null;
+  approval_notes?: string | null;
+  subtotal_paisa: number;
+  discount_paisa: number;
+  tax_paisa: number;
+  total_amount_paisa: number;
+  notes?: string | null;
+  cancellation_reason?: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  customer?: Customer;
+  branch?: Branch;
+  delivery_address?: CustomerAddress;
+  salesman?: UserProfile;
+  price_list?: PriceList;
+  approver?: UserProfile;
+  creator?: UserProfile;
+  lines?: SalesOrderLine[];
+  allocations?: SalesOrderAllocation[];
+}
+
+export interface SalesOrderLine {
+  id: string;
+  company_id: string;
+  sales_order_id: string;
+  item_id: string;
+  sku: string;
+  ordered_qty: number;
+  allocated_qty: number;
+  dispatched_qty: number;
+  unit_id: string;
+  conversion_rate: number;
+  base_ordered_qty: number;
+  base_allocated_qty: number;
+  unit_price_paisa: number;
+  discount_percent: number;
+  discount_amount_paisa: number;
+  tax_rate_id?: string | null;
+  tax_rate_percent: number;
+  taxable_amount_paisa: number;
+  cgst_paisa: number;
+  sgst_paisa: number;
+  igst_paisa: number;
+  line_total_paisa: number;
+  created_at: string;
+  updated_at: string;
+  item?: Item;
+  unit?: Unit;
+  tax_rate?: TaxRate;
+}
+
+export interface SalesOrderAllocation {
+  id: string;
+  company_id: string;
+  sales_order_id: string;
+  sales_order_line_id: string;
+  reservation_id: string;
+  batch_id: string;
+  warehouse_id: string;
+  allocated_qty: number;
+  status: string;
+  created_at: string;
+  batch?: InventoryBatch;
+  warehouse?: Warehouse;
+}
+
