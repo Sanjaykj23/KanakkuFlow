@@ -13,6 +13,17 @@ export function formatCurrencyINR(amount: number): string {
   }).format(amount);
 }
 
+export function formatPaisa(paisa: number | null | undefined): string {
+  if (paisa === null || paisa === undefined) return "₹0.00";
+  const rupees = paisa / 100;
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+  }).format(rupees);
+}
+
 export function formatDate(dateString: string | Date): string {
   const date = typeof dateString === "string" ? new Date(dateString) : dateString;
   return new Intl.DateTimeFormat("en-IN", {

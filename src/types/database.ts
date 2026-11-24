@@ -249,6 +249,8 @@ export interface CustomerRegistrationRequest {
   request_number: string;
   shop_name: string;
   owner_name: string;
+  trade_name?: string;
+  legal_name?: string;
   mobile_number: string;
   normalized_mobile: string;
   alternate_number?: string | null;
@@ -285,6 +287,8 @@ export interface Customer {
   customer_code: string;
   shop_name: string;
   owner_name: string;
+  trade_name?: string;
+  legal_name?: string;
   mobile_number: string;
   normalized_mobile: string;
   alternate_number?: string | null;
@@ -1009,6 +1013,9 @@ export interface SalesOrderLine {
   cgst_paisa: number;
   sgst_paisa: number;
   igst_paisa: number;
+  cgst_amount_paisa?: number;
+  sgst_amount_paisa?: number;
+  igst_amount_paisa?: number;
   line_total_paisa: number;
   created_at: string;
   updated_at: string;
@@ -1031,4 +1038,223 @@ export interface SalesOrderAllocation {
   batch?: InventoryBatch;
   warehouse?: Warehouse;
 }
+
+// ============================================================================
+// PHASE 7: INVOICING & FINANCE
+// ============================================================================
+
+export type InvoiceStatus =
+  | "DRAFT"
+  | "POSTED"
+  | "PARTIALLY_PAID"
+  | "PAID"
+  | "OVERDUE"
+  | "CANCELLED"
+  | "CREDITED";
+
+export type ReceivableEntryType =
+  | "INVOICE"
+  | "PAYMENT"
+  | "CREDIT_NOTE"
+  | "DEBIT_NOTE"
+  | "OPENING_BALANCE"
+  | "ADJUSTMENT";
+
+export type PaymentMethod =
+  | "CASH"
+  | "BANK_TRANSFER"
+  | "UPI"
+  | "CHEQUE"
+  | "DEMAND_DRAFT"
+  | "OTHER";
+
+export type CustomerPaymentStatus = "DRAFT" | "POSTED" | "REVERSED";
+
+export type CreditNoteStatus = "DRAFT" | "PENDING_APPROVAL" | "POSTED" | "CANCELLED";
+
+export interface SalesInvoice {
+  id: string;
+  company_id: string;
+  branch_id: string;
+  invoice_number: string;
+  invoice_date: string;
+  due_date: string;
+  payment_terms_days: number;
+  sales_order_id?: string | null;
+  customer_id: string;
+  customer_legal_name: string;
+  customer_gstin?: string | null;
+  billing_address: any;
+  shipping_address: any;
+  place_of_supply: string;
+  is_reverse_charge: boolean;
+  company_legal_name: string;
+  company_gstin?: string | null;
+  company_address: any;
+  status: InvoiceStatus;
+  subtotal_paisa: number;
+  discount_paisa: number;
+  taxable_amount_paisa: number;
+  cgst_paisa: number;
+  sgst_paisa: number;
+  igst_paisa: number;
+  cgst_amount_paisa?: number;
+  sgst_amount_paisa?: number;
+  igst_amount_paisa?: number;
+  total_tax_paisa: number;
+  rounding_paisa: number;
+  total_amount_paisa: number;
+  paid_amount_paisa: number;
+  credited_amount_paisa: number;
+  outstanding_amount_paisa: number;
+  notes?: string | null;
+  created_by: string;
+  posted_by?: string | null;
+  posted_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  customer?: Customer;
+  branch?: Branch;
+  sales_order?: SalesOrder;
+  lines?: SalesInvoiceLine[];
+  allocations?: CustomerPaymentAllocation[];
+  credit_notes?: CreditNote[];
+}
+
+export interface SalesInvoiceLine {
+  id: string;
+  company_id: string;
+  invoice_id: string;
+  sales_order_line_id?: string | null;
+  item_id: string;
+  item_name: string;
+  sku: string;
+  hsn_code: string;
+  quantity: number;
+  unit_id: string;
+  unit_code: string;
+  unit_price_paisa: number;
+  discount_percent: number;
+  discount_amount_paisa: number;
+  taxable_value_paisa: number;
+  gst_rate_percent: number;
+  cgst_paisa: number;
+  sgst_paisa: number;
+  igst_paisa: number;
+  cgst_amount_paisa?: number;
+  sgst_amount_paisa?: number;
+  igst_amount_paisa?: number;
+  line_total_paisa: number;
+  created_at: string;
+  item?: Item;
+  unit?: Unit;
+}
+
+export interface CustomerReceivablesLedgerEntry {
+  id: string;
+  company_id: string;
+  customer_id: string;
+  branch_id: string;
+  entry_type: ReceivableEntryType;
+  transaction_date: string;
+  due_date?: string | null;
+  source_document_type: string;
+  source_document_id: string;
+  reference_number: string;
+  debit_paisa: number;
+  credit_paisa: number;
+  running_balance_paisa: number;
+  notes?: string | null;
+  created_by: string;
+  created_at: string;
+  customer?: Customer;
+  branch?: Branch;
+}
+
+export interface CustomerPayment {
+  id: string;
+  company_id: string;
+  branch_id: string;
+  customer_id: string;
+  payment_number: string;
+  payment_date: string;
+  payment_method: PaymentMethod;
+  reference_number?: string | null;
+  amount_paisa: number;
+  allocated_amount_paisa: number;
+  unallocated_amount_paisa: number;
+  status: CustomerPaymentStatus;
+  notes?: string | null;
+  recorded_by: string;
+  created_at: string;
+  updated_at: string;
+  customer?: Customer;
+  branch?: Branch;
+  allocations?: CustomerPaymentAllocation[];
+}
+
+export interface CustomerPaymentAllocation {
+  id: string;
+  company_id: string;
+  payment_id: string;
+  invoice_id: string;
+  customer_id: string;
+  allocated_amount_paisa: number;
+  allocated_by: string;
+  created_at: string;
+  payment?: CustomerPayment;
+  invoice?: SalesInvoice;
+}
+
+export interface CreditNote {
+  id: string;
+  company_id: string;
+  branch_id: string;
+  credit_note_number: string;
+  credit_note_date: string;
+  original_invoice_id: string;
+  invoice_id?: string;
+  customer_id: string;
+  reason: string;
+  status: CreditNoteStatus;
+  taxable_amount_paisa: number;
+  cgst_paisa: number;
+  sgst_paisa: number;
+  igst_paisa: number;
+  cgst_amount_paisa?: number;
+  sgst_amount_paisa?: number;
+  igst_amount_paisa?: number;
+  total_amount_paisa: number;
+  created_by: string;
+  approved_by?: string | null;
+  approved_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  original_invoice?: SalesInvoice;
+  invoice?: SalesInvoice;
+  customer?: Customer;
+  branch?: Branch;
+  lines?: CreditNoteLine[];
+}
+
+export interface CreditNoteLine {
+  id: string;
+  company_id: string;
+  credit_note_id: string;
+  item_id?: string | null;
+  item_name: string;
+  quantity: number;
+  unit_id?: string | null;
+  taxable_value_paisa: number;
+  gst_rate_percent: number;
+  cgst_paisa: number;
+  sgst_paisa: number;
+  igst_paisa: number;
+  cgst_amount_paisa?: number;
+  sgst_amount_paisa?: number;
+  igst_amount_paisa?: number;
+  line_total_paisa: number;
+  created_at: string;
+}
+
 

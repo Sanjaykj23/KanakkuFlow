@@ -34,6 +34,8 @@ import {
   Sliders,
   AlertOctagon,
   TrendingUp,
+  Clock,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAVIGATION_CONFIG } from "@/lib/constants";
@@ -67,6 +69,8 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Sliders: <Sliders className="w-4 h-4" />,
   AlertOctagon: <AlertOctagon className="w-4 h-4" />,
   TrendingUp: <TrendingUp className="w-4 h-4" />,
+  Clock: <Clock className="w-4 h-4" />,
+  FileText: <FileText className="w-4 h-4" />,
 };
 
 interface SidebarProps {
