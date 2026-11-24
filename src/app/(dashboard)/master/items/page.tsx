@@ -116,7 +116,43 @@ export default function ItemsMasterPage() {
     if (!res.success) {
       alert("Failed to seed default master data: " + res.error);
     } else {
-      loadData();
+      const [itemsRes, unitsRes, hsnRes, taxRes] = await Promise.all([
+        getItems(),
+        getUnits(),
+        getHsnCodes(),
+        getTaxRates(),
+      ]);
+      if (itemsRes.success && itemsRes.items) setItems(itemsRes.items);
+      if (unitsRes.success && unitsRes.units) {
+        const uList = unitsRes.units;
+        setUnits(uList);
+        if (!formData.primaryUnitId && uList.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            primaryUnitId: uList[0].id,
+          }));
+        }
+      }
+      if (hsnRes.success && hsnRes.hsnCodes) {
+        const hList = hsnRes.hsnCodes;
+        setHsnCodes(hList);
+        if (!formData.hsnCodeId && hList.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            hsnCodeId: hList[0].id,
+          }));
+        }
+      }
+      if (taxRes.success && taxRes.taxRates) {
+        const tList = taxRes.taxRates;
+        setTaxRates(tList);
+        if (!formData.defaultTaxRateId && tList.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            defaultTaxRateId: tList[0].id,
+          }));
+        }
+      }
     }
   };
 
@@ -398,6 +434,32 @@ export default function ItemsMasterPage() {
               Define item SKU, pricing, unit of measure, and shelf-life tracking parameters.
             </DialogDescription>
           </DialogHeader>
+
+          {(units.length === 0 || hsnCodes.length === 0 || taxRates.length === 0) && (
+            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                <Sparkles className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                <span>
+                  Units, HSN, and GST slabs are not loaded yet for your company.
+                </span>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleSeedDefaults}
+                disabled={isSeeding}
+                className="h-7 text-xs border-amber-300 text-amber-900 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-900/40"
+              >
+                {isSeeding ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5 mr-1 text-primary" />
+                )}
+                Load FMCG Defaults
+              </Button>
+            </div>
+          )}
 
           {formError && (
             <div className="p-3 bg-red-500/10 border border-red-500/30 rounded text-sm text-red-600">

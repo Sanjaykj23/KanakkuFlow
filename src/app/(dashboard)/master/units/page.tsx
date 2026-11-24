@@ -449,14 +449,29 @@ export default function UnitsMasterPage() {
           )}
 
           {units.length < 2 && (
-            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded text-xs text-amber-700 dark:text-amber-400 space-y-1">
+            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded text-xs text-amber-700 dark:text-amber-400 space-y-2">
               <div className="font-semibold flex items-center gap-1.5">
                 <AlertCircle className="w-4 h-4 text-amber-600" />
                 At least 2 units of measure are required
               </div>
               <p>
-                You need at least two units defined to create conversion factors. Click &quot;Seed Standard Food Units&quot; on the page to automatically load them.
+                You need at least two units defined to create conversion factors (e.g. 1 BOX = 24 PKT, 1 KG = 1000 G).
               </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleSeedDefaults}
+                disabled={isSeeding}
+                className="h-7 text-xs border-amber-300 text-amber-900 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-900/40"
+              >
+                {isSeeding ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5 mr-1 text-primary" />
+                )}
+                Load Standard Food Units
+              </Button>
             </div>
           )}
 

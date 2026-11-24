@@ -409,6 +409,21 @@ export type SupplierBillStatus =
   | "PAID"
   | "CANCELLED";
 
+export type BomType = "BULK_WIP" | "PACKAGING" | "FINISHED_GOODS";
+export type BomStatus = "DRAFT" | "ACTIVE" | "INACTIVE" | "OBSOLETE";
+export type BomComponentType = "RAW_MATERIAL" | "PACKAGING" | "BULK_WIP";
+export type ProductionStage = "BULK_PRODUCTION" | "PACKAGING_PRODUCTION";
+export type ProductionOrderStatus =
+  | "DRAFT"
+  | "SUBMITTED"
+  | "APPROVED"
+  | "MATERIAL_RESERVED"
+  | "IN_PROGRESS"
+  | "PARTIALLY_COMPLETED"
+  | "COMPLETED"
+  | "REJECTED"
+  | "CANCELLED";
+
 export interface PurchaseOrder {
   id: string;
   company_id: string;
@@ -723,4 +738,136 @@ export interface SupplierBill {
   purchase_order?: PurchaseOrder;
   grn?: GoodsReceiptNote;
   creator?: UserProfile;
+}
+
+export interface BillOfMaterials {
+  id: string;
+  company_id: string;
+  bom_number: string;
+  product_id: string;
+  bom_type: BomType;
+  version: string;
+  effective_date: string;
+  status: BomStatus;
+  expected_output_qty: number;
+  output_unit_id: string;
+  expected_yield_percent: number;
+  expected_wastage_percent: number;
+  labor_overhead_cost_paisa: number;
+  notes?: string | null;
+  created_by: string;
+  approved_by?: string | null;
+  created_at: string;
+  updated_at: string;
+  product?: Item;
+  output_unit?: Unit;
+  creator?: UserProfile;
+  lines?: BomLine[];
+}
+
+export interface BomLine {
+  id: string;
+  company_id: string;
+  bom_id: string;
+  line_number: number;
+  component_item_id: string;
+  component_type: BomComponentType;
+  quantity: number;
+  unit_id: string;
+  conversion_rate: number;
+  base_unit_qty: number;
+  expected_wastage_percent: number;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  component_item?: Item;
+  unit?: Unit;
+}
+
+export interface ProductionOrder {
+  id: string;
+  company_id: string;
+  branch_id: string;
+  order_number: string;
+  bom_id: string;
+  product_id: string;
+  order_type: ProductionStage;
+  planned_qty: number;
+  produced_qty: number;
+  unit_id: string;
+  production_warehouse_id: string;
+  finished_warehouse_id: string;
+  planned_start_date: string;
+  planned_completion_date: string;
+  actual_start_date?: string | null;
+  actual_completion_date?: string | null;
+  status: ProductionOrderStatus;
+  source_bulk_batch_id?: string | null;
+  total_material_cost_paisa: number;
+  additional_costs_paisa: number;
+  total_production_cost_paisa: number;
+  unit_cost_paisa: number;
+  rejection_reason?: string | null;
+  cancellation_reason?: string | null;
+  notes?: string | null;
+  created_by: string;
+  approved_by?: string | null;
+  approved_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  branch?: Branch;
+  bom?: BillOfMaterials;
+  product?: Item;
+  unit?: Unit;
+  production_warehouse?: Warehouse;
+  finished_warehouse?: Warehouse;
+  source_bulk_batch?: InventoryBatch;
+  creator?: UserProfile;
+  consumptions?: ProductionConsumption[];
+  outputs?: ProductionOutput[];
+}
+
+export interface ProductionConsumption {
+  id: string;
+  company_id: string;
+  production_order_id: string;
+  item_id: string;
+  batch_id: string;
+  warehouse_id: string;
+  consumed_qty: number;
+  wastage_qty: number;
+  unit_id: string;
+  unit_cost_paisa: number;
+  total_cost_paisa: number;
+  reason?: string | null;
+  recorded_by: string;
+  created_at: string;
+  item?: Item;
+  batch?: InventoryBatch;
+  warehouse?: Warehouse;
+  unit?: Unit;
+}
+
+export interface ProductionOutput {
+  id: string;
+  company_id: string;
+  production_order_id: string;
+  item_id: string;
+  output_batch_id: string;
+  warehouse_id: string;
+  produced_qty: number;
+  rejected_qty: number;
+  unit_id: string;
+  unit_cost_paisa: number;
+  total_cost_paisa: number;
+  qc_status: QcStatus;
+  qc_notes?: string | null;
+  qc_inspected_by?: string | null;
+  qc_inspected_at?: string | null;
+  produced_by: string;
+  created_at: string;
+  item?: Item;
+  output_batch?: InventoryBatch;
+  warehouse?: Warehouse;
+  unit?: Unit;
 }
