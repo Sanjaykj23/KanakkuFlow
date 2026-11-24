@@ -340,12 +340,66 @@ export type GrnStatus = "DRAFT" | "POSTED" | "CANCELLED";
 
 export type QcStatus = "PENDING" | "RELEASED" | "REJECTED" | "QUARANTINED";
 
+export type BatchType =
+  | "RAW_MATERIAL"
+  | "PACKAGING"
+  | "BULK_WIP"
+  | "FINISHED_GOODS";
+
+export type BatchStatus =
+  | "ACTIVE"
+  | "QC_PENDING"
+  | "QUARANTINED"
+  | "BLOCKED"
+  | "EXPIRED"
+  | "DEPLETED";
+
+export type ReservationStatus =
+  | "ACTIVE"
+  | "RELEASED"
+  | "CONSUMED"
+  | "EXPIRED"
+  | "CANCELLED";
+
+export type StockTransferStatus =
+  | "DRAFT"
+  | "SUBMITTED"
+  | "APPROVED"
+  | "IN_TRANSIT"
+  | "PARTIALLY_RECEIVED"
+  | "RECEIVED"
+  | "REJECTED"
+  | "CANCELLED";
+
+export type StockAdjustmentStatus =
+  | "DRAFT"
+  | "SUBMITTED"
+  | "APPROVED"
+  | "REJECTED"
+  | "CANCELLED";
+
+export type StockAdjustmentType =
+  | "PHYSICAL_COUNT"
+  | "DAMAGE"
+  | "EXPIRY"
+  | "FOUND"
+  | "RECONCILIATION";
+
 export type StockMovementType =
   | "GRN_RECEIPT"
   | "GRN_REVERSAL"
+  | "STOCK_TRANSFER_OUT"
+  | "STOCK_TRANSFER_IN"
+  | "STOCK_ADJUSTMENT_IN"
+  | "STOCK_ADJUSTMENT_OUT"
+  | "OPENING_STOCK"
+  | "PRODUCTION_CONSUMPTION"
+  | "PRODUCTION_OUTPUT"
+  | "SALES_DISPATCH"
+  | "SALES_RETURN"
+  | "PURCHASE_RETURN"
   | "PRODUCTION_ISSUE"
   | "PRODUCTION_RECEIPT"
-  | "SALES_DISPATCH"
   | "STOCK_ADJUSTMENT";
 
 export type SupplierBillStatus =
@@ -469,18 +523,26 @@ export interface InventoryBatch {
   warehouse_id: string;
   item_id: string;
   batch_number: string;
+  batch_type: BatchType;
+  batch_status: BatchStatus;
   supplier_id?: string | null;
   supplier_batch_number?: string | null;
-  grn_id: string;
-  grn_line_id: string;
+  grn_id?: string | null;
+  grn_line_id?: string | null;
   received_date: string;
   manufacturing_date?: string | null;
   expiry_date?: string | null;
   initial_qty: number;
   current_qty: number;
+  reserved_qty: number;
   base_unit_id: string;
   unit_cost_paisa: number;
   qc_status: QcStatus;
+  blocked_reason?: string | null;
+  blocked_by?: string | null;
+  blocked_at?: string | null;
+  qc_released_by?: string | null;
+  qc_released_at?: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -504,6 +566,7 @@ export interface StockMovement {
   unit_cost_paisa: number;
   reference_type: string;
   reference_id: string;
+  reason?: string | null;
   created_by: string;
   created_at: string;
   warehouse?: Warehouse;
@@ -511,6 +574,127 @@ export interface StockMovement {
   batch?: InventoryBatch;
   base_unit?: Unit;
   creator?: UserProfile;
+}
+
+export interface StockReservation {
+  id: string;
+  company_id: string;
+  branch_id: string;
+  warehouse_id: string;
+  item_id: string;
+  batch_id: string;
+  reserved_qty: number;
+  base_unit_id: string;
+  source_document_type: string;
+  source_document_id: string;
+  status: ReservationStatus;
+  expiry_timestamp?: string | null;
+  notes?: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  warehouse?: Warehouse;
+  item?: Item;
+  batch?: InventoryBatch;
+  base_unit?: Unit;
+  creator?: UserProfile;
+}
+
+export interface StockTransfer {
+  id: string;
+  company_id: string;
+  transfer_number: string;
+  source_branch_id: string;
+  source_warehouse_id: string;
+  destination_branch_id: string;
+  destination_warehouse_id: string;
+  status: StockTransferStatus;
+  notes?: string | null;
+  created_by: string;
+  approved_by?: string | null;
+  approved_at?: string | null;
+  dispatched_by?: string | null;
+  dispatched_at?: string | null;
+  received_by?: string | null;
+  received_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  source_branch?: Branch;
+  source_warehouse?: Warehouse;
+  destination_branch?: Branch;
+  destination_warehouse?: Warehouse;
+  creator?: UserProfile;
+  lines?: StockTransferLine[];
+}
+
+export interface StockTransferLine {
+  id: string;
+  company_id: string;
+  transfer_id: string;
+  line_number: number;
+  item_id: string;
+  batch_id: string;
+  requested_qty: number;
+  dispatched_qty: number;
+  received_qty: number;
+  unit_id: string;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  item?: Item;
+  batch?: InventoryBatch;
+  unit?: Unit;
+}
+
+export interface StockAdjustment {
+  id: string;
+  company_id: string;
+  branch_id: string;
+  warehouse_id: string;
+  adjustment_number: string;
+  adjustment_type: StockAdjustmentType;
+  status: StockAdjustmentStatus;
+  reason: string;
+  created_by: string;
+  approved_by?: string | null;
+  approved_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  branch?: Branch;
+  warehouse?: Warehouse;
+  creator?: UserProfile;
+  lines?: StockAdjustmentLine[];
+}
+
+export interface StockAdjustmentLine {
+  id: string;
+  company_id: string;
+  adjustment_id: string;
+  line_number: number;
+  item_id: string;
+  batch_id: string;
+  system_qty: number;
+  counted_qty: number;
+  difference_qty: number;
+  unit_id: string;
+  reason?: string | null;
+  created_at: string;
+  updated_at: string;
+  item?: Item;
+  batch?: InventoryBatch;
+  unit?: Unit;
+}
+
+export interface ItemValuationLedger {
+  id: string;
+  company_id: string;
+  item_id: string;
+  total_on_hand_qty: number;
+  weighted_avg_cost_paisa: number;
+  total_valuation_paisa: number;
+  last_movement_id?: string | null;
+  updated_at: string;
+  item?: Item;
 }
 
 export interface SupplierBill {

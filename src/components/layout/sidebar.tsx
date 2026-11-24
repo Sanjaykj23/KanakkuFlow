@@ -30,6 +30,10 @@ import {
   Warehouse,
   UsersRound,
   ClipboardList,
+  ArrowLeftRight,
+  Sliders,
+  AlertOctagon,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAVIGATION_CONFIG } from "@/lib/constants";
@@ -59,6 +63,10 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Warehouse: <Warehouse className="w-4 h-4" />,
   UsersRound: <UsersRound className="w-4 h-4" />,
   ClipboardList: <ClipboardList className="w-4 h-4" />,
+  ArrowLeftRight: <ArrowLeftRight className="w-4 h-4" />,
+  Sliders: <Sliders className="w-4 h-4" />,
+  AlertOctagon: <AlertOctagon className="w-4 h-4" />,
+  TrendingUp: <TrendingUp className="w-4 h-4" />,
 };
 
 interface SidebarProps {
