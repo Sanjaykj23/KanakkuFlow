@@ -70,6 +70,29 @@ export const NAVIGATION_CONFIG: NavGroup[] = [
     ],
   },
   {
+    group: "Procurement & Receiving",
+    items: [
+      {
+        title: "Purchase Orders",
+        href: "/purchases",
+        icon: "FileSpreadsheet",
+        allowedRoles: ["OWNER", "ADMIN", "SUPERVISOR", "ACCOUNTANT", "WAREHOUSE"],
+      },
+      {
+        title: "Goods Receipt (GRN)",
+        href: "/goods-receipts",
+        icon: "Truck",
+        allowedRoles: ["OWNER", "ADMIN", "SUPERVISOR", "WAREHOUSE"],
+      },
+      {
+        title: "Supplier Bills",
+        href: "/supplier-bills",
+        icon: "Receipt",
+        allowedRoles: ["OWNER", "ADMIN", "ACCOUNTANT"],
+      },
+    ],
+  },
+  {
     group: "Field Sales & CRM",
     items: [
       {

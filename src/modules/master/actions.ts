@@ -477,6 +477,31 @@ export async function getSuppliers(): Promise<{
   }
 }
 
+export async function getSupplierById(id: string): Promise<{
+  success: boolean;
+  supplier?: Supplier;
+  error?: string;
+}> {
+  try {
+    const session = await getCurrentUserSession();
+    if (!session) return { success: false, error: "Unauthorized session." };
+
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("suppliers")
+      .select("*")
+      .eq("company_id", session.companyId)
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error) return { success: false, error: error.message };
+    if (!data) return { success: false, error: "Supplier not found." };
+    return { success: true, supplier: data };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
 export async function saveSupplier(
   input: SupplierInput
 ): Promise<{ success: boolean; supplier?: Supplier; error?: string }> {

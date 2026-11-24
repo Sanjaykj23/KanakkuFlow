@@ -322,3 +322,221 @@ export interface CustomerAddress {
   created_at: string;
   updated_at: string;
 }
+
+// ============================================================================
+// PHASE 3: PROCUREMENT & GOODS RECEIPT TYPES
+// ============================================================================
+
+export type PurchaseOrderStatus =
+  | "DRAFT"
+  | "SUBMITTED"
+  | "APPROVED"
+  | "PARTIALLY_RECEIVED"
+  | "RECEIVED"
+  | "REJECTED"
+  | "CANCELLED";
+
+export type GrnStatus = "DRAFT" | "POSTED" | "CANCELLED";
+
+export type QcStatus = "PENDING" | "RELEASED" | "REJECTED" | "QUARANTINED";
+
+export type StockMovementType =
+  | "GRN_RECEIPT"
+  | "GRN_REVERSAL"
+  | "PRODUCTION_ISSUE"
+  | "PRODUCTION_RECEIPT"
+  | "SALES_DISPATCH"
+  | "STOCK_ADJUSTMENT";
+
+export type SupplierBillStatus =
+  | "DRAFT"
+  | "POSTED"
+  | "DISCREPANCY_FLAGGED"
+  | "PAID"
+  | "CANCELLED";
+
+export interface PurchaseOrder {
+  id: string;
+  company_id: string;
+  branch_id: string;
+  po_number: string;
+  supplier_id: string;
+  delivery_warehouse_id: string;
+  order_date: string;
+  expected_delivery_date: string;
+  status: PurchaseOrderStatus;
+  created_by: string;
+  approved_by?: string | null;
+  approved_at?: string | null;
+  rejection_reason?: string | null;
+  cancellation_reason?: string | null;
+  currency: string;
+  subtotal_paisa: number;
+  tax_paisa: number;
+  discount_paisa: number;
+  total_paisa: number;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  branch?: Branch;
+  supplier?: Supplier;
+  delivery_warehouse?: Warehouse;
+  created_by_profile?: UserProfile;
+  approved_by_profile?: UserProfile;
+  lines?: PurchaseOrderLine[];
+}
+
+export interface PurchaseOrderLine {
+  id: string;
+  company_id: string;
+  purchase_order_id: string;
+  line_number: number;
+  item_id: string;
+  ordered_qty: number;
+  unit_id: string;
+  conversion_rate: number;
+  base_unit_qty: number;
+  unit_price_paisa: number;
+  discount_paisa: number;
+  tax_rate_id?: string | null;
+  tax_rate_snapshot: number;
+  tax_paisa: number;
+  total_paisa: number;
+  received_qty: number;
+  pending_qty: number;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  item?: Item;
+  unit?: Unit;
+  tax_rate?: TaxRate;
+}
+
+export interface GoodsReceiptNote {
+  id: string;
+  company_id: string;
+  branch_id: string;
+  warehouse_id: string;
+  grn_number: string;
+  purchase_order_id: string;
+  supplier_id: string;
+  receiving_employee_id: string;
+  receipt_date: string;
+  supplier_delivery_challan: string;
+  status: GrnStatus;
+  posted_at?: string | null;
+  posted_by?: string | null;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  branch?: Branch;
+  warehouse?: Warehouse;
+  purchase_order?: PurchaseOrder;
+  supplier?: Supplier;
+  receiving_employee?: UserProfile;
+  posted_by_profile?: UserProfile;
+  lines?: GoodsReceiptNoteLine[];
+}
+
+export interface GoodsReceiptNoteLine {
+  id: string;
+  company_id: string;
+  grn_id: string;
+  po_line_id: string;
+  item_id: string;
+  received_qty: number;
+  accepted_qty: number;
+  rejected_qty: number;
+  damaged_qty: number;
+  unit_id: string;
+  conversion_rate: number;
+  base_accepted_qty: number;
+  supplier_batch_number?: string | null;
+  manufacturing_date?: string | null;
+  expiry_date?: string | null;
+  qc_status: QcStatus;
+  rejection_reason?: string | null;
+  created_at: string;
+  item?: Item;
+  unit?: Unit;
+  po_line?: PurchaseOrderLine;
+}
+
+export interface InventoryBatch {
+  id: string;
+  company_id: string;
+  branch_id: string;
+  warehouse_id: string;
+  item_id: string;
+  batch_number: string;
+  supplier_id?: string | null;
+  supplier_batch_number?: string | null;
+  grn_id: string;
+  grn_line_id: string;
+  received_date: string;
+  manufacturing_date?: string | null;
+  expiry_date?: string | null;
+  initial_qty: number;
+  current_qty: number;
+  base_unit_id: string;
+  unit_cost_paisa: number;
+  qc_status: QcStatus;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  warehouse?: Warehouse;
+  item?: Item;
+  supplier?: Supplier;
+  base_unit?: Unit;
+  grn?: GoodsReceiptNote;
+}
+
+export interface StockMovement {
+  id: string;
+  company_id: string;
+  branch_id: string;
+  warehouse_id: string;
+  item_id: string;
+  batch_id?: string | null;
+  movement_type: StockMovementType;
+  quantity: number;
+  base_unit_id: string;
+  unit_cost_paisa: number;
+  reference_type: string;
+  reference_id: string;
+  created_by: string;
+  created_at: string;
+  warehouse?: Warehouse;
+  item?: Item;
+  batch?: InventoryBatch;
+  base_unit?: Unit;
+  creator?: UserProfile;
+}
+
+export interface SupplierBill {
+  id: string;
+  company_id: string;
+  branch_id: string;
+  bill_number: string;
+  supplier_id: string;
+  supplier_invoice_number: string;
+  invoice_date: string;
+  due_date: string;
+  purchase_order_id?: string | null;
+  grn_id?: string | null;
+  taxable_amount_paisa: number;
+  tax_amount_paisa: number;
+  freight_charges_paisa: number;
+  discount_paisa: number;
+  total_amount_paisa: number;
+  status: SupplierBillStatus;
+  discrepancy_notes?: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  supplier?: Supplier;
+  branch?: Branch;
+  purchase_order?: PurchaseOrder;
+  grn?: GoodsReceiptNote;
+  creator?: UserProfile;
+}

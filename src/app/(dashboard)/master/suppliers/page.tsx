@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -251,14 +252,26 @@ export default function SuppliersMasterPage() {
                         {s.payment_terms_days} Days
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 w-8 p-0"
-                          onClick={() => openEditModal(s)}
-                        >
-                          <Edit2 className="w-4 h-4 text-zinc-500" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Link href={`/suppliers/${s.id}/purchases`}>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-xs px-2 text-zinc-600 dark:text-zinc-400 hover:text-primary"
+                              title="View 360 Procurement Record"
+                            >
+                              360° History
+                            </Button>
+                          </Link>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            onClick={() => openEditModal(s)}
+                          >
+                            <Edit2 className="w-4 h-4 text-zinc-500" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
