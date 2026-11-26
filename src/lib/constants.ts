@@ -27,6 +27,18 @@ export const NAVIGATION_CONFIG: NavGroup[] = [
         allowedRoles: ["OWNER", "ADMIN", "SUPERVISOR", "SALESMAN", "ACCOUNTANT", "PRODUCTION", "WAREHOUSE"],
       },
       {
+        title: "Enterprise Reports",
+        href: "/reports",
+        icon: "FileSpreadsheet",
+        allowedRoles: ["OWNER", "ADMIN", "ACCOUNTANT", "SUPERVISOR"],
+      },
+      {
+        title: "Data Reconciliation",
+        href: "/reports/reconciliation",
+        icon: "ShieldCheck",
+        allowedRoles: ["OWNER", "ADMIN", "ACCOUNTANT"],
+      },
+      {
         title: "Audit Trail",
         href: "/audit-logs",
         icon: "ShieldAlert",
